@@ -177,9 +177,34 @@ func NewRect(p Point, lengths []float64) (r *Rect, err error) {
 			err = DistError(lengths[i])
 			return
 		}
+		fmt.Println(p[i] + lengths[i])
 		r.q[i] = p[i] + lengths[i]
 	}
 	return
+}
+
+type Line struct {
+	q, p Point // сюда запишем координаты
+}
+
+// Вернет начало или конец(0 или 1 в качестве аргумента) в формате [lat, lon]
+func (r *Line) PointCoord(i int) []float64 {
+	if i == 0 {
+		return []float64{r.q[0], r.q[1]}
+	}
+	return []float64{r.q[0], r.p[1]}
+}
+
+// Вернет длину линии через формулу гаверсинусов
+func (r *Line) Lengths() float64 {
+	//TODO формула гаверсинусов
+	return 1
+}
+
+func (r *Line) String() string {
+	info := "lat1: " + string(r.p[0]) + "lon" + r.p[1] + "lat2" + r.q[0] + "lon2" + r.q[1]
+
+	return strings.Join(s, "x")
 }
 
 // NewRectFromPoints constructs and returns a pointer to a Rect given a corner points.
