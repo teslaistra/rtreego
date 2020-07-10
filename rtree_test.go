@@ -40,6 +40,10 @@ func (r *Rect) Bounds() *Rect {
 	return r
 }
 
+func (r *Line) Bounds() *Line {
+	return r
+}
+
 func mustRect(p Point, widths []float64) *Rect {
 	r, err := NewRect(p, widths)
 	if err != nil {

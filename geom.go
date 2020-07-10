@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+const (
+	EARTH_RADIUS = 6371
+)
+
 // DimError represents a failure due to mismatched dimensions.
 type DimError struct {
 	Expected int
@@ -137,6 +141,10 @@ func (r *Rect) LengthsCoord(i int) float64 {
 	return r.q[i] - r.p[i]
 }
 
+func (r *Rect) Diag() float64 {
+	return GreatCircle(r.p, r.q)
+}
+
 // Equal returns true if the two rectangles are equal
 func (r *Rect) Equal(other *Rect) bool {
 	for i, e := range r.p {
@@ -192,19 +200,73 @@ func (r *Line) PointCoord(i int) []float64 {
 	if i == 0 {
 		return []float64{r.q[0], r.q[1]}
 	}
-	return []float64{r.q[0], r.p[1]}
+	return []float64{r.p[0], r.p[1]}
 }
 
 // Вернет длину линии через формулу гаверсинусов
-func (r *Line) Lengths() float64 {
-	//TODO формула гаверсинусов
-	return 1
+func (r *Line) LengthsCoord() float64 {
+	return GreatCircle(r.q, r.p)
 }
 
+//вернет строку с данной линией
 func (r *Line) String() string {
-	info := "lat1: " + string(r.p[0]) + "lon" + r.p[1] + "lat2" + r.q[0] + "lon2" + r.q[1]
+	s := make([]string, len(r.p))
+	for i, a := range r.p {
+		b := r.q[i]
+		s[i] = fmt.Sprintf("[%.2f, %.2f]", a, b)
+	}
 
 	return strings.Join(s, "x")
+}
+
+func (r *Line) Equal(other *Line) bool {
+	for i, e := range r.p {
+		if e != other.p[i] {
+			return false
+		}
+	}
+	for i, e := range r.q {
+		if e != other.q[i] {
+			return false
+		}
+	}
+	return true
+}
+
+//func (r *Line) ToRect() Rect{
+//	p1 := Point{r.p[0], r.p[1]}
+//	p2 := Point{r.q[0],r.p[1]} //взяли точки нижней грани
+//	low_border := GreatCircle(p1, p2)
+//
+//	p1 = Point{r.q[0], r.p[1]}
+//	p2 = Point{r.q[0],r.q[1]} //взяли точки боковой грани
+//	side_border := GreatCircle(p1, p2)
+//
+//	r = &Rect{p: minPoint, q: maxPoint}
+//}
+//конструктор
+func NewLine(p Point, q Point) (r *Line, err error) {
+	r = new(Line)
+	r.p = p
+	r.q = q
+	return
+}
+
+func GreatCircle(from Point, to Point) float64 {
+	dLat := (from[0] - to[0]) * (math.Pi / 180.0)
+	dLon := (from[1] - to[1]) * (math.Pi / 180.0)
+
+	lat1 := from[0] * (math.Pi / 180.0)
+	lat2 := to[0] * (math.Pi / 180.0)
+
+	a1 := math.Sin(dLat/2) * math.Sin(dLat/2)
+	a2 := math.Sin(dLon/2) * math.Sin(dLon/2) * math.Cos(lat1) * math.Cos(lat2)
+
+	a := a1 + a2
+
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	return EARTH_RADIUS * c
 }
 
 // NewRectFromPoints constructs and returns a pointer to a Rect given a corner points.
@@ -213,7 +275,7 @@ func NewRectFromPoints(minPoint, maxPoint Point) (r *Rect, err error) {
 		err = &DimError{len(minPoint), len(maxPoint)}
 		return
 	}
-
+	fmt.Println(minPoint, maxPoint)
 	//checking that  min and max points is swapping
 	for i, p := range minPoint {
 		if minPoint[i] > maxPoint[i] {
