@@ -35,17 +35,9 @@ func (err DistError) Error() string {
 // Point represents a point in n-dimensional Euclidean space.
 type Point []float64
 
-// Dist computes the Euclidean distance between two points p and q.
+// Dist computes the Great Circle distance between two points p and q.
 func (p Point) dist(q Point) float64 {
-	if len(p) != len(q) {
-		panic(DimError{len(p), len(q)})
-	}
-	sum := 0.0
-	for i := range p {
-		dx := p[i] - q[i]
-		sum += dx * dx
-	}
-	return math.Sqrt(sum)
+	return GreatCircle(p, q)
 }
 
 // minDist computes the square of the distance from a point to a rectangle.
@@ -58,19 +50,19 @@ func (p Point) minDist(r *Rect) float64 {
 		panic(DimError{len(p), len(r.p)})
 	}
 
-	sum := 0.0
+	coordinates := make([]float64, 2)
+
 	for i, pi := range p {
 		if pi < r.p[i] {
-			d := pi - r.p[i]
-			sum += d * d
+			coordinates[i] = r.p[i]
 		} else if pi > r.q[i] {
-			d := pi - r.q[i]
-			sum += d * d
+			coordinates[i] = r.q[i]
 		} else {
-			sum += 0
+			coordinates[i] = pi
+
 		}
 	}
-	return sum
+	return GreatCircle(p, Point{coordinates[0], coordinates[1]})
 }
 
 // minMaxDist computes the minimum of the maximum distances from p to points
@@ -185,52 +177,9 @@ func NewRect(p Point, lengths []float64) (r *Rect, err error) {
 			err = DistError(lengths[i])
 			return
 		}
-		fmt.Println(p[i] + lengths[i])
 		r.q[i] = p[i] + lengths[i]
 	}
 	return
-}
-
-type Line struct {
-	q, p Point // сюда запишем координаты
-}
-
-// Вернет начало или конец(0 или 1 в качестве аргумента) в формате [lat, lon]
-func (r *Line) PointCoord(i int) []float64 {
-	if i == 0 {
-		return []float64{r.q[0], r.q[1]}
-	}
-	return []float64{r.p[0], r.p[1]}
-}
-
-// Вернет длину линии через формулу гаверсинусов
-func (r *Line) LengthsCoord() float64 {
-	return GreatCircle(r.q, r.p)
-}
-
-//вернет строку с данной линией
-func (r *Line) String() string {
-	s := make([]string, len(r.p))
-	for i, a := range r.p {
-		b := r.q[i]
-		s[i] = fmt.Sprintf("[%.2f, %.2f]", a, b)
-	}
-
-	return strings.Join(s, "x")
-}
-
-func (r *Line) Equal(other *Line) bool {
-	for i, e := range r.p {
-		if e != other.p[i] {
-			return false
-		}
-	}
-	for i, e := range r.q {
-		if e != other.q[i] {
-			return false
-		}
-	}
-	return true
 }
 
 //func (r *Line) ToRect() Rect{
@@ -244,14 +193,8 @@ func (r *Line) Equal(other *Line) bool {
 //
 //	r = &Rect{p: minPoint, q: maxPoint}
 //}
-//конструктор
-func NewLine(p Point, q Point) (r *Line, err error) {
-	r = new(Line)
-	r.p = p
-	r.q = q
-	return
-}
 
+//Returns distnace in meters
 func GreatCircle(from Point, to Point) float64 {
 	dLat := (from[0] - to[0]) * (math.Pi / 180.0)
 	dLon := (from[1] - to[1]) * (math.Pi / 180.0)
@@ -266,7 +209,7 @@ func GreatCircle(from Point, to Point) float64 {
 
 	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 
-	return EARTH_RADIUS * c
+	return EARTH_RADIUS * c * 1000
 }
 
 // NewRectFromPoints constructs and returns a pointer to a Rect given a corner points.
@@ -275,7 +218,7 @@ func NewRectFromPoints(minPoint, maxPoint Point) (r *Rect, err error) {
 		err = &DimError{len(minPoint), len(maxPoint)}
 		return
 	}
-	fmt.Println(minPoint, maxPoint)
+	fmt.Println("Делаю новый прямоугольник", minPoint, maxPoint)
 	//checking that  min and max points is swapping
 	for i, p := range minPoint {
 		if minPoint[i] > maxPoint[i] {
@@ -407,6 +350,10 @@ func (p Point) ToRect(tol float64) *Rect {
 		b[i] = p[i] + tol
 	}
 	return &Rect{a, b}
+}
+
+func (p Point) TestDist(r *Rect) float64 {
+
 }
 
 // boundingBox constructs the smallest rectangle containing both r1 and r2.

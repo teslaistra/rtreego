@@ -377,7 +377,6 @@ func (n *node) split(minGroupSize int) (left, right *node) {
 		entries: []entry{rightSeed},
 	}
 
-	// TODO
 	if rightSeed.child != nil {
 		rightSeed.child.parent = right
 	}
