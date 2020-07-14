@@ -13,15 +13,18 @@ type Rect struct {
 	name string
 }
 
+//returns MBR of rectangle. Implementation of interface
 func (t *Rect) Bounds() *Rect {
 	//rect, _ := NewRectFromPoints(t.p, t.q)
 	return t
 }
 
+//returns type of itself. Implementation of interface
 func (t *Rect) GetTypeOf() reflect.Type {
 	return reflect.TypeOf(t)
 }
 
+//returns name of itself. Implementation of interface
 func (t *Rect) GetNameOf() string {
 	return t.name
 }
@@ -45,17 +48,13 @@ func NewRectFromPoints(minPoint, maxPoint Point, name string) (r *Rect, err erro
 	return
 }
 
-// LengthsCoord returns the coordinate of the lengths of the rectangle at i
-//func (r *Rect) SurfaceLenghts(i int) float64 {
-//	return r.q[i] - r.p[i]
-//}
-
 //Diagonal returns rectangle diagonal
 func (r *Rect) Diagonal() float64 {
 	return GreatCircle(r.p, r.q)
 }
 
 // Equal returns true if the two rectangles are equal
+//TODO ПРОТЕСТИРОВАТЬ
 func (r *Rect) Equal(other *Rect) bool {
 	for i, e := range r.p {
 		if e != other.p[i] {

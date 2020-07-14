@@ -12,7 +12,7 @@ type Line struct {
 	where         *Rect
 }
 
-//конструктор
+//constructor
 func NewLine(p Point, q Point, name string) (r *Line, err error) {
 	r = new(Line)
 	r.start = p
@@ -23,32 +23,39 @@ func NewLine(p Point, q Point, name string) (r *Line, err error) {
 	return
 }
 
+//returns MBR of line. Implementation of interface
 func (t *Line) Bounds() *Rect {
 	rect := t.where
 	return rect
 }
 
+//returns type of itself. Implementation of interface
 func (t *Line) GetTypeOf() reflect.Type {
 	return reflect.TypeOf(t)
 }
 
+//returns name of itself. Implementation of interface
 func (t *Line) GetNameOf() string {
 	return t.name
 }
 
+//returns a line from points, stored in rectangle
 func (r *Rect) RectToLine(name string) *Line {
 	l1, _ := NewLine(r.q, r.p, name)
 	return l1
 }
 
-func (l *Line) Lenght() float64 {
+//returns length of line
+func (l *Line) Length() float64 {
 	return GreatCircle(l.start, l.finish)
 }
 
+//returns array of points(start and finish point)
 func (l *Line) GetPoints() []Point {
 	return []Point{l.start, l.finish}
 }
 
+//returns string presentation of line
 func (r *Line) String() string {
 	s := make([]string, 4)
 	s[0] = "Start:"
@@ -59,6 +66,8 @@ func (r *Line) String() string {
 	return strings.Join(s, " ")
 }
 
+//check if lines are equal
+//TODO ПРОТЕСТИРОВАТЬ
 func (r *Line) Equal(other *Line) bool {
 	for i, e := range r.start {
 		if e != other.start[i] {
