@@ -71,6 +71,9 @@ func (p Point) minDist(r *Rect) float64 {
 //
 // Implemented per Definition 4 of "Nearest Neighbor Queries" by
 // N. Roussopoulos, S. Kelley and F. Vincent, ACM SIGMOD, pages 71-79, 1995.
+// http://www.cse.msu.edu/~pramanik/teaching/courses/cse880/14f/lectures/5.multimediaIndexing/KNN-Rousapolis/lec.pdf
+// https://www.cs.umd.edu/~nick/papers/nncolor.pdf
+
 func (p Point) minMaxDist(r *Rect) float64 {
 	if len(p) != len(r.p) {
 		panic(DimError{len(p), len(r.p)})
