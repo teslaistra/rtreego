@@ -22,17 +22,16 @@ performance is not guaranteed.  Instead, a number of rebalancing
 heuristics are applied that perform well in practice.  For more
 details please refer to the references.
 
-This implementation handles the general N-dimensional case; for a more
-efficient implementation for the 3-dimensional case, see [Patrick
-Higgins' fork](https://github.com/patrick-higgins/rtreego).
+This implementation is done for working with geospatial data.
+All distances are calculated with Great Circle formula.
 
 Getting Started
 ---------------
 
-Get the source code from [GitHub](https://github.com/dhconnelly/rtreego) or,
-with Go 1 installed, run `go get github.com/dhconnelly/rtreego`.
+Get the source code from [GitHub](https://github.com/teslaistra/rtreego) or,
+with Go 1 installed, run `https://github.com/teslaistra/rtreego`.
 
-Make sure you `import github.com/dhconnelly/rtreego` in your Go source files.
+Make sure you `import github.com/teslaistra/rtreego` in your Go source files.
 
 Documentation
 -------------
@@ -67,7 +66,7 @@ To create a `Rect`, specify a location and the lengths of the sides:
     r1, _ := rtreego.NewRect(p1, []float64{1, 2})
     r2, _ := rtreego.NewRect(p2, []float64{1.7, 2.7})
 
-To demonstrate, let's create and store some test data.
+To demonstrate, let's create and store some test data. Now you can create line, rectangle, or point. You can create your own by implementing the `Spatial` interface, as shown below.
 
     type Thing struct {
       where *Rect
@@ -77,7 +76,15 @@ To demonstrate, let's create and store some test data.
     func (t *Thing) Bounds() *Rect {
       return t.where
     }
-
+    
+    func (t *Thing) GetTypeOf() reflect.Type {
+	    return reflect.TypeOf(t)
+    }
+    
+    func (t *Thing) GetNameOf() string {
+	    return t.name
+    }
+    
     rt.Insert(&Thing{r1, "foo"})
     rt.Insert(&Thing{r2, "bar"})
 
@@ -88,7 +95,7 @@ We can insert and delete objects from the tree in any order.
     rt.Delete(thing2)
     // do some stuff...
     rt.Insert(anotherThing)
-
+<b>Everything below is implemented by original lib, and it needs to be tested</b>
 Note that ```Delete``` function does the equality comparison by comparing the
 memory addresses of the objects. If you do not have a pointer to the original
 object anymore, you can define a custom comparator.
@@ -106,24 +113,6 @@ You can use a custom comparator with ```DeleteWithComparator``` function.
 
     rt.DeleteWithComparator(obj, cmp)
 
-If you want to store points instead of rectangles, you can easily convert a
-point into a rectangle using the `ToRect` method:
-
-    var tol = 0.01
-
-    type Somewhere struct {
-      location rtreego.Point
-      name string
-      wormhole chan int
-    }
-
-    func (s *Somewhere) Bounds() *Rect {
-      // define the bounds of s to be a rectangle centered at s.location
-      // with side lengths 2 * tol:
-      return s.location.ToRect(tol)
-    }
-
-    rt.Insert(&Somewhere{rtreego.Point{0, 0}, "Someplace", nil})
 
 If you want to update the location of an object, you must delete it, update it,
 and re-insert.  Just modifying the object so that the `*Rect` returned by
@@ -183,11 +172,18 @@ References
 - N. Roussopoulos, S. Kelley and F. Vincent.  Nearest Neighbor Queries.  ACM
   SIGMOD, pages 71-79, 1995.
   http://www.postgis.org/support/nearestneighbor.pdf
+  
+- Nick Roussopoulos, Stephen Kelley, Frederic Vincent, University of Maryland, May 1995, Nearest Neighbor Queries 
+  https://www.cs.umd.edu/~nick/papers/nncolor.pdf
+  
+- Advanced Database Systems, KNN- Search, Roussopoulos Paper, S. Pramanik
+  http://www.cse.msu.edu/~pramanik/teaching/courses/cse880/14f/lectures/5.multimediaIndexing/KNN-Rousapolis/lec.pdf
+
 
 Author
 ------
-
 Written by [Daniel Connelly](http://dhconnelly.com) (<dhconnelly@gmail.com>).
+Edited by [Daniil_Yefimov](https://github.com/teslaistra) (danyefimoff@gmail.com)
 
 License
 -------
