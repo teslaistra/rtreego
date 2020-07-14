@@ -1128,7 +1128,7 @@ type byMinDist struct {
 }
 
 func (r byMinDist) Less(i, j int) bool {
-	return r.p.minDist(r.r[i].Bounds()) < r.p.minDist(r.r[j].Bounds())
+	return r.p.MinDist(r.r[i].Bounds()) < r.p.MinDist(r.r[j].Bounds())
 }
 
 func (r byMinDist) Len() int {

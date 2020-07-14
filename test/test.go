@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math"
-	"reflect"
 )
 import "github.com/dhconnelly/rtreego"
 
@@ -18,18 +17,6 @@ type Somewhere struct {
 	location rtreego.Point
 	name     string
 	wormhole chan int
-}
-
-func (t *Rect) Bounds() *rtreego.Rect {
-	return t.where
-}
-
-func (t *Rect) GetTypeOf() reflect.Type {
-	return reflect.TypeOf(t)
-}
-
-func (t *Rect) GetNameOf() string {
-	return t.name
 }
 
 func RoundTwoSigns(x float64) float64 {
@@ -49,19 +36,23 @@ func TestLines() {
 	results := rt.NearestNeighbor(q)
 	//size := rt.Size() // returns 2
 	fmt.Println(results.(*rtreego.Line))
-	fmt.Println(RoundTwoSigns(results.Bounds().Diag()))
+	fmt.Println(RoundTwoSigns(results.Bounds().Diagonal()))
 
 	fmt.Println(results.Bounds().RectToLine("result line").String())
 }
 
 func main() {
-	//rt := rtreego.NewTree(2, 3, 3)
+	rt := rtreego.NewTree(2, 3, 3)
 
-	p1 := rtreego.Point{0, 0}
-	r1, _ := rtreego.NewRect([]float64{0, 3}, []float64{4, 4})
-	f := p1.TestDist(r1)
-	fmt.Println(f)
-	//r2, _ := rtreego.NewRect(p2, []float64{1.7, 2.7})
-	//rt.Insert(&Rect{r1, "foo"})
+	//p1 := rtreego.Point{3, 1}
+	r1, _ := rtreego.NewRectFromPoints(rtreego.Point{0, 0}, rtreego.Point{0, 6}, "house1")
+	l1, _ := rtreego.NewLine(rtreego.Point{0, 0}, rtreego.Point{0, 6}, "street1")
+
+	//f := p1.TestminMaxDist(l3)
+
+	rt.Insert(r1)
+	rt.Insert(l1)
+
+	//fmt.Println(f)
 
 }

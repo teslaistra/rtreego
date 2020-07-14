@@ -19,7 +19,7 @@ func NewLine(p Point, q Point, name string) (r *Line, err error) {
 	r.finish = q
 	r.name = name
 
-	r.where, _ = NewRectFromPoints(r.start, r.finish)
+	r.where, _ = NewRectFromPoints(r.start, r.finish, name)
 	return
 }
 

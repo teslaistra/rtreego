@@ -5,9 +5,7 @@
 package rtreego
 
 import (
-	"fmt"
 	"math"
-	"strings"
 )
 
 const (
@@ -45,7 +43,9 @@ func (p Point) dist(q Point) float64 {
 //
 // Implemented per Definition 2 of "Nearest Neighbor Queries" by
 // N. Roussopoulos, S. Kelley and F. Vincent, ACM SIGMOD, pages 71-79, 1995.
-func (p Point) minDist(r *Rect) float64 {
+// http://www.cse.msu.edu/~pramanik/teaching/courses/cse880/14f/lectures/5.multimediaIndexing/KNN-Rousapolis/lec.pdf
+// https://www.cs.umd.edu/~nick/papers/nncolor.pdf
+func (p Point) MinDist(r *Rect) float64 {
 	if len(p) != len(r.p) {
 		panic(DimError{len(p), len(r.p)})
 	}
@@ -62,7 +62,7 @@ func (p Point) minDist(r *Rect) float64 {
 
 		}
 	}
-	return GreatCircle(p, Point{coordinates[0], coordinates[1]})
+	return math.Pow(GreatCircle(p, Point{coordinates[0], coordinates[1]}), 2)
 }
 
 // minMaxDist computes the minimum of the maximum distances from p to points
@@ -73,45 +73,22 @@ func (p Point) minDist(r *Rect) float64 {
 // N. Roussopoulos, S. Kelley and F. Vincent, ACM SIGMOD, pages 71-79, 1995.
 // http://www.cse.msu.edu/~pramanik/teaching/courses/cse880/14f/lectures/5.multimediaIndexing/KNN-Rousapolis/lec.pdf
 // https://www.cs.umd.edu/~nick/papers/nncolor.pdf
-
 func (p Point) minMaxDist(r *Rect) float64 {
 	if len(p) != len(r.p) {
 		panic(DimError{len(p), len(r.p)})
 	}
 
-	// by definition, MinMaxDist(p, r) =
-	// min{1<=k<=n}(|pk - rmk|^2 + sum{1<=i<=n, i != k}(|pi - rMi|^2))
-	// where rmk and rMk are defined as follows:
+	RectPoints := []Point{r.p, r.q, {r.p[0], r.q[1]}, {r.q[0], r.p[1]}}
+	RectPointsDistances := []float64{
+		GreatCircle(p, r.p),                   // to left bottom
+		GreatCircle(p, Point{r.p[0], r.q[1]}), // to left top
+		GreatCircle(p, r.q),                   // to right top
+		GreatCircle(p, Point{r.q[0], r.p[1]}), // to right bottom
+		GreatCircle(p, r.p)}                   // to left bottom
 
-	rm := func(k int) float64 {
-		if p[k] <= (r.p[k]+r.q[k])/2 {
-			return r.p[k]
-		}
-		return r.q[k]
-	}
-
-	rM := func(k int) float64 {
-		if p[k] >= (r.p[k]+r.q[k])/2 {
-			return r.p[k]
-		}
-		return r.q[k]
-	}
-
-	// This formula can be computed in linear time by precomputing
-	// S = sum{1<=i<=n}(|pi - rMi|^2).
-
-	S := 0.0
-	for i := range p {
-		d := p[i] - rM(i)
-		S += d * d
-	}
-
-	// Compute MinMaxDist using the precomputed S.
 	min := math.MaxFloat64
-	for k := range p {
-		d1 := p[k] - rM(k)
-		d2 := p[k] - rm(k)
-		d := S - d1*d1 + d2*d2
+	for k := range RectPoints {
+		d := Max(RectPointsDistances[k], RectPointsDistances[k+1])
 		if d < min {
 			min = d
 		}
@@ -119,83 +96,6 @@ func (p Point) minMaxDist(r *Rect) float64 {
 
 	return min
 }
-
-// Rect represents a subset of n-dimensional Euclidean space of the form
-// [a1, b1] x [a2, b2] x ... x [an, bn], where ai < bi for all 1 <= i <= n.
-type Rect struct {
-	p, q Point // Enforced by NewRect: p[i] <= q[i] for all i.
-}
-
-// PointCoord returns the coordinate of the point of the rectangle at i
-func (r *Rect) PointCoord(i int) float64 {
-	return r.p[i]
-}
-
-// LengthsCoord returns the coordinate of the lengths of the rectangle at i
-func (r *Rect) LengthsCoord(i int) float64 {
-	return r.q[i] - r.p[i]
-}
-
-func (r *Rect) Diag() float64 {
-	return GreatCircle(r.p, r.q)
-}
-
-// Equal returns true if the two rectangles are equal
-func (r *Rect) Equal(other *Rect) bool {
-	for i, e := range r.p {
-		if e != other.p[i] {
-			return false
-		}
-	}
-	for i, e := range r.q {
-		if e != other.q[i] {
-			return false
-		}
-	}
-	return true
-}
-
-func (r *Rect) String() string {
-	s := make([]string, len(r.p))
-	for i, a := range r.p {
-		b := r.q[i]
-		s[i] = fmt.Sprintf("[%.2f, %.2f]", a, b)
-	}
-	return strings.Join(s, "x")
-}
-
-// NewRect constructs and returns a pointer to a Rect given a corner point and
-// the lengths of each dimension.  The point p should be the most-negative point
-// on the rectangle (in every dimension) and every length should be positive.
-func NewRect(p Point, lengths []float64) (r *Rect, err error) {
-	r = new(Rect)
-	r.p = p
-	if len(p) != len(lengths) {
-		err = &DimError{len(p), len(lengths)}
-		return
-	}
-	r.q = make([]float64, len(p))
-	for i := range p {
-		if lengths[i] <= 0 {
-			err = DistError(lengths[i])
-			return
-		}
-		r.q[i] = p[i] + lengths[i]
-	}
-	return
-}
-
-//func (r *Line) ToRect() Rect{
-//	p1 := Point{r.p[0], r.p[1]}
-//	p2 := Point{r.q[0],r.p[1]} //взяли точки нижней грани
-//	low_border := GreatCircle(p1, p2)
-//
-//	p1 = Point{r.q[0], r.p[1]}
-//	p2 = Point{r.q[0],r.q[1]} //взяли точки боковой грани
-//	side_border := GreatCircle(p1, p2)
-//
-//	r = &Rect{p: minPoint, q: maxPoint}
-//}
 
 //Returns distnace in meters
 func GreatCircle(from Point, to Point) float64 {
@@ -215,26 +115,8 @@ func GreatCircle(from Point, to Point) float64 {
 	return EARTH_RADIUS * c * 1000
 }
 
-// NewRectFromPoints constructs and returns a pointer to a Rect given a corner points.
-func NewRectFromPoints(minPoint, maxPoint Point) (r *Rect, err error) {
-	if len(minPoint) != len(maxPoint) {
-		err = &DimError{len(minPoint), len(maxPoint)}
-		return
-	}
-	fmt.Println("Делаю новый прямоугольник", minPoint, maxPoint)
-	//checking that  min and max points is swapping
-	for i, p := range minPoint {
-		if minPoint[i] > maxPoint[i] {
-			minPoint[i] = maxPoint[i]
-			maxPoint[i] = p
-		}
-	}
-
-	r = &Rect{p: minPoint, q: maxPoint}
-	return
-}
-
 // Size computes the measure of a rectangle (the product of its side lengths).
+//TODO ПЕРЕПИСАТЬ НА S2
 func (r *Rect) Size() float64 {
 	size := 1.0
 	for i, a := range r.p {
@@ -245,6 +127,7 @@ func (r *Rect) Size() float64 {
 }
 
 // margin computes the sum of the edge lengths of a rectangle.
+//TODO ПЕРЕПИСАТЬ НА GREATCIRCLE
 func (r *Rect) margin() float64 {
 	// The number of edges in an n-dimensional rectangle is n * 2^(n-1)
 	// (http://en.wikipedia.org/wiki/Hypercube_graph).  Thus the number
@@ -263,6 +146,7 @@ func (r *Rect) margin() float64 {
 }
 
 // containsPoint tests whether p is located inside or on the boundary of r.
+//TODO ПРОТЕСТИРОВАТЬ
 func (r *Rect) containsPoint(p Point) bool {
 	if len(p) != len(r.p) {
 		panic(DimError{len(r.p), len(p)})
@@ -280,6 +164,7 @@ func (r *Rect) containsPoint(p Point) bool {
 }
 
 // containsRect tests whether r2 is is located inside r1.
+//TODO ПРОТЕСТИРОВАТЬ
 func (r *Rect) containsRect(r2 *Rect) bool {
 	if len(r.p) != len(r2.p) {
 		panic(DimError{len(r.p), len(r2.p)})
@@ -300,6 +185,7 @@ func (r *Rect) containsRect(r2 *Rect) bool {
 
 // intersect computes the intersection of two rectangles.  If no intersection
 // exists, the intersection is nil.
+//TODO ПРОТЕСТИРОВАТЬ
 func intersect(r1, r2 *Rect) bool {
 	dim := len(r1.p)
 	if len(r2.p) != dim {
@@ -345,6 +231,7 @@ func intersect(r1, r2 *Rect) bool {
 }
 
 // ToRect constructs a rectangle containing p with side lengths 2*tol.
+//TODO УБРАТЬ, НАПИСАВ ОТДЕЛЬНЫЙ ТИП ДЛЯ ТОЧКИ
 func (p Point) ToRect(tol float64) *Rect {
 	dim := len(p)
 	a, b := make([]float64, dim), make([]float64, dim)
@@ -352,14 +239,11 @@ func (p Point) ToRect(tol float64) *Rect {
 		a[i] = p[i] - tol
 		b[i] = p[i] + tol
 	}
-	return &Rect{a, b}
-}
-
-func (p Point) TestDist(r *Rect) float64 {
-
+	return &Rect{a, b, ""}
 }
 
 // boundingBox constructs the smallest rectangle containing both r1 and r2.
+//TODO ПРОТЕСТИРОВАТЬ
 func boundingBox(r1, r2 *Rect) (bb *Rect) {
 	bb = new(Rect)
 	dim := len(r1.p)
@@ -384,6 +268,7 @@ func boundingBox(r1, r2 *Rect) (bb *Rect) {
 }
 
 // boundingBoxN constructs the smallest rectangle containing all of r...
+//TODO ПРОТЕСТИРОВАТЬ
 func boundingBoxN(rects ...*Rect) (bb *Rect) {
 	if len(rects) == 1 {
 		bb = rects[0]
@@ -394,4 +279,12 @@ func boundingBoxN(rects ...*Rect) (bb *Rect) {
 		bb = boundingBox(bb, rect)
 	}
 	return
+}
+
+// Max returns the larger of x or y.
+func Max(x, y float64) float64 {
+	if x < y {
+		return y
+	}
+	return x
 }

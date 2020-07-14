@@ -353,7 +353,7 @@ func TestBoundingBoxN(t *testing.T) {
 func TestMinDistZero(t *testing.T) {
 	p := Point{1, 2, 3}
 	r := p.ToRect(1)
-	if d := p.minDist(r); d > EPS {
+	if d := p.MinDist(r); d > EPS {
 		t.Errorf("Expected %v.minDist(%v) == 0, got %v", p, r, d)
 	}
 }
@@ -362,7 +362,7 @@ func TestMinDistPositive(t *testing.T) {
 	p := Point{1, 2, 3}
 	r := &Rect{Point{-1, -4, 7}, Point{2, -2, 9}}
 	expected := float64((-2-2)*(-2-2) + (7-3)*(7-3))
-	if d := p.minDist(r); math.Abs(d-expected) > EPS {
+	if d := p.MinDist(r); math.Abs(d-expected) > EPS {
 		t.Errorf("Expected %v.minDist(%v) == %v, got %v", p, r, expected, d)
 	}
 }
