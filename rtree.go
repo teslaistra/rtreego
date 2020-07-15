@@ -34,9 +34,9 @@ type Rtree struct {
 // NewTree returns an Rtree. If the number of objects given on initialization
 // is larger than max, the Rtree will be initialized using the Overlap
 // Minimizing Top-down bulk-loading algorithm.
-func NewTree(dim, min, max int, objs ...Spatial) *Rtree {
+func NewTree(min, max int, objs ...Spatial) *Rtree {
 	rt := &Rtree{
-		Dim:         dim,
+		Dim:         2,
 		MinChildren: min,
 		MaxChildren: max,
 		height:      1,
@@ -547,7 +547,7 @@ func (tree *Rtree) findLeaf(n *node, obj Spatial, cmp Comparator) *node {
 	}
 	// if not leaf, search all candidate subtrees
 	for _, e := range n.entries {
-		if e.bb.containsRect(obj.Bounds()) {
+		if e.bb.ContainsRect(obj.Bounds()) {
 			leaf := tree.findLeaf(e.child, obj, cmp)
 			if leaf == nil {
 				continue
@@ -625,7 +625,7 @@ func (tree *Rtree) SearchIntersectWithLimit(k int, bb *Rect) []Spatial {
 
 func (tree *Rtree) searchIntersect(results []Spatial, n *node, bb *Rect, filters []Filter) []Spatial {
 	for _, e := range n.entries {
-		if !intersect(e.bb, bb) {
+		if !Intersect(e.bb, bb) {
 			continue
 		}
 

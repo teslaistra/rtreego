@@ -54,7 +54,6 @@ func (r *Rect) Diagonal() float64 {
 }
 
 // Equal returns true if the two rectangles are equal
-//TODO ПРОТЕСТИРОВАТЬ
 func (r *Rect) Equal(other *Rect) bool {
 	for i, e := range r.p {
 		if e != other.p[i] {
@@ -83,20 +82,3 @@ func (r *Rect) String() string {
 // NewRect constructs and returns a pointer to a Rect given a corner point and
 // the lengths of each dimension.  The point p should be the most-negative point
 // on the rectangle (in every dimension) and every length should be positive.
-func NewRect(p Point, lengths []float64) (r *Rect, err error) {
-	r = new(Rect)
-	r.p = p
-	if len(p) != len(lengths) {
-		err = &DimError{len(p), len(lengths)}
-		return
-	}
-	r.q = make([]float64, len(p))
-	for i := range p {
-		if lengths[i] <= 0 {
-			err = DistError(lengths[i])
-			return
-		}
-		r.q[i] = p[i] + lengths[i]
-	}
-	return
-}

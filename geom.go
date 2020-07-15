@@ -5,6 +5,8 @@
 package rtreego
 
 import (
+	"fmt"
+	"github.com/golang/geo/s2"
 	"math"
 )
 
@@ -29,9 +31,6 @@ type DistError float64
 func (err DistError) Error() string {
 	return "rtreego: improper distance"
 }
-
-// Point represents a point in n-dimensional Euclidean space.
-type Point []float64
 
 // Dist computes the Great Circle distance between two points p and q.
 func (p Point) dist(q Point) float64 {
@@ -118,35 +117,27 @@ func GreatCircle(from Point, to Point) float64 {
 // Size computes the measure of a rectangle (the product of its side lengths).
 //TODO ПЕРЕПИСАТЬ НА S2
 func (r *Rect) Size() float64 {
+	point1 := s2.PointFromCoords(r.p[0], r.p[1], 0)
+	point2 := s2.PointFromCoords(r.q[0], r.q[1], 0)
+	fmt.Println(r.p.dist(r.q))
+	fmt.Println(point1.Distance(point2))
 	size := 1.0
-	for i, a := range r.p {
-		b := r.q[i]
-		size *= b - a
-	}
+	//for i, a := range r.p {
+	//	b := r.q[i]
+	//	size *= b - a
+	//}
 	return size
 }
 
 // margin computes the sum of the edge lengths of a rectangle.
-//TODO ПЕРЕПИСАТЬ НА GREATCIRCLE
 func (r *Rect) margin() float64 {
-	// The number of edges in an n-dimensional rectangle is n * 2^(n-1)
-	// (http://en.wikipedia.org/wiki/Hypercube_graph).  Thus the number
-	// of edges of length (ai - bi), where the rectangle is determined
-	// by p = (a1, a2, ..., an) and q = (b1, b2, ..., bn), is 2^(n-1).
-	//
-	// The margin of the rectangle, then, is given by the formula
-	// 2^(n-1) * [(b1 - a1) + (b2 - a2) + ... + (bn - an)].
-	dim := len(r.p)
-	sum := 0.0
-	for i, a := range r.p {
-		b := r.q[i]
-		sum += b - a
-	}
-	return math.Pow(2, float64(dim-1)) * sum
+	l1 := GreatCircle(r.p, Point{r.p[0], r.q[1]})
+	l2 := GreatCircle(r.q, Point{r.p[0], r.q[1]})
+
+	return (l2 + l1) * 2
 }
 
 // containsPoint tests whether p is located inside or on the boundary of r.
-//TODO ПРОТЕСТИРОВАТЬ
 func (r *Rect) containsPoint(p Point) bool {
 	if len(p) != len(r.p) {
 		panic(DimError{len(r.p), len(p)})
@@ -164,8 +155,7 @@ func (r *Rect) containsPoint(p Point) bool {
 }
 
 // containsRect tests whether r2 is is located inside r1.
-//TODO ПРОТЕСТИРОВАТЬ
-func (r *Rect) containsRect(r2 *Rect) bool {
+func (r *Rect) ContainsRect(r2 *Rect) bool {
 	if len(r.p) != len(r2.p) {
 		panic(DimError{len(r.p), len(r2.p)})
 	}
@@ -185,8 +175,7 @@ func (r *Rect) containsRect(r2 *Rect) bool {
 
 // intersect computes the intersection of two rectangles.  If no intersection
 // exists, the intersection is nil.
-//TODO ПРОТЕСТИРОВАТЬ
-func intersect(r1, r2 *Rect) bool {
+func Intersect(r1, r2 *Rect) bool {
 	dim := len(r1.p)
 	if len(r2.p) != dim {
 		panic(DimError{dim, len(r2.p)})
@@ -230,20 +219,7 @@ func intersect(r1, r2 *Rect) bool {
 	return true
 }
 
-// ToRect constructs a rectangle containing p with side lengths 2*tol.
-//TODO УБРАТЬ, НАПИСАВ ОТДЕЛЬНЫЙ ТИП ДЛЯ ТОЧКИ
-func (p Point) ToRect(tol float64) *Rect {
-	dim := len(p)
-	a, b := make([]float64, dim), make([]float64, dim)
-	for i := range p {
-		a[i] = p[i] - tol
-		b[i] = p[i] + tol
-	}
-	return &Rect{a, b, ""}
-}
-
 // boundingBox constructs the smallest rectangle containing both r1 and r2.
-//TODO ПРОТЕСТИРОВАТЬ
 func boundingBox(r1, r2 *Rect) (bb *Rect) {
 	bb = new(Rect)
 	dim := len(r1.p)
@@ -268,7 +244,6 @@ func boundingBox(r1, r2 *Rect) (bb *Rect) {
 }
 
 // boundingBoxN constructs the smallest rectangle containing all of r...
-//TODO ПРОТЕСТИРОВАТЬ
 func boundingBoxN(rects ...*Rect) (bb *Rect) {
 	if len(rects) == 1 {
 		bb = rects[0]

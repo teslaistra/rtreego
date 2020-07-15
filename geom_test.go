@@ -230,7 +230,7 @@ func TestNoIntersection(t *testing.T) {
 
 	// rect1 and rect2 fail to overlap in just one dimension (second)
 
-	if intersect(rect1, rect2) {
+	if Intersect(rect1, rect2) {
 		t.Errorf("Expected intersect(%v, %v) == false", rect1, rect2)
 	}
 }
@@ -246,7 +246,7 @@ func TestNoIntersectionJustTouches(t *testing.T) {
 
 	// rect1 and rect2 fail to overlap in just one dimension (second)
 
-	if intersect(rect1, rect2) {
+	if Intersect(rect1, rect2) {
 		t.Errorf("Expected intersect(%v, %v) == false", rect1, rect2)
 	}
 }
@@ -263,7 +263,7 @@ func TestContainmentIntersection(t *testing.T) {
 	r := Point{1, 2.2, 3.3}
 	s := Point{1.5, 2.7, 3.8}
 
-	if !intersect(rect1, rect2) {
+	if !Intersect(rect1, rect2) {
 		t.Errorf("intersect(%v, %v) != %v, %v", rect1, rect2, r, s)
 	}
 }
@@ -280,7 +280,7 @@ func TestOverlapIntersection(t *testing.T) {
 	r := Point{1, 4, 3}
 	s := Point{2, 4.5, 3.5}
 
-	if !intersect(rect1, rect2) {
+	if !Intersect(rect1, rect2) {
 		t.Errorf("intersect(%v, %v) != %v, %v", rect1, rect2, r, s)
 	}
 }
