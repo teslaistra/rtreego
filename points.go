@@ -29,6 +29,7 @@ func (p *Point) String() string {
 	return fmt.Sprintf("%.2f", p)
 }
 
+//constructor
 func NewPoint(lat, lon float64) (r *Point) {
 	r = &Point{lat, lon}
 	return r

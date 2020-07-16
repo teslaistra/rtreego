@@ -5,7 +5,6 @@
 package rtreego
 
 import (
-	"fmt"
 	"github.com/golang/geo/s2"
 	"math"
 )
@@ -115,18 +114,12 @@ func GreatCircle(from Point, to Point) float64 {
 }
 
 // Size computes the measure of a rectangle (the product of its side lengths).
-//TODO ПЕРЕПИСАТЬ НА S2
 func (r *Rect) Size() float64 {
-	point1 := s2.PointFromCoords(r.p[0], r.p[1], 0)
-	point2 := s2.PointFromCoords(r.q[0], r.q[1], 0)
-	fmt.Println(r.p.dist(r.q))
-	fmt.Println(point1.Distance(point2))
-	size := 1.0
-	//for i, a := range r.p {
-	//	b := r.q[i]
-	//	size *= b - a
-	//}
-	return size
+	p1 := s2.LatLngFromDegrees(r.p[0], r.p[1])
+	p2 := s2.LatLngFromDegrees(r.q[0], r.q[1])
+	rect := s2.RectFromLatLng(p1)
+	rect = rect.AddPoint(p2)
+	return rect.Area()
 }
 
 // margin computes the sum of the edge lengths of a rectangle.

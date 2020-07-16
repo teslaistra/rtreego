@@ -78,7 +78,3 @@ func (r *Rect) String() string {
 
 	return strings.Join(s, " ")
 }
-
-// NewRect constructs and returns a pointer to a Rect given a corner point and
-// the lengths of each dimension.  The point p should be the most-negative point
-// on the rectangle (in every dimension) and every length should be positive.

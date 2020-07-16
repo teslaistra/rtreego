@@ -67,7 +67,6 @@ func (r *Line) String() string {
 }
 
 //check if lines are equal
-//TODO ПРОТЕСТИРОВАТЬ
 func (r *Line) Equal(other *Line) bool {
 	for i, e := range r.start {
 		if e != other.start[i] {
