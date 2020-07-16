@@ -1,12 +1,8 @@
 rtreego
 =======
 
-A library for efficiently storing and querying spatial data
+A fork of library for efficiently storing and querying geospatial data
 in the Go programming language.
-
-[![Build Status](https://travis-ci.org/dhconnelly/rtreego.png?branch=master)](https://travis-ci.org/dhconnelly/rtreego)
-[![Go Report Card](https://goreportcard.com/badge/github.com/dhconnelly/rtreego)](https://goreportcard.com/report/github.com/dhconnelly/rtreego)
-[![GoDoc](https://godoc.org/github.com/dhconnelly/rtreego?status.svg)](https://godoc.org/github.com/dhconnelly/rtreego)
 
 About
 -----
@@ -38,20 +34,22 @@ Documentation
 
 ### Storing, updating, and deleting objects
 
-To create a new tree, specify the number of spatial dimensions and the minimum
+To create a new tree specify the minimum
 and maximum branching factor:
 
-    rt := rtreego.NewTree(2, 25, 50)
+    rt := rtreego.NewTree(25, 50)
 
 You can also bulk-load the tree when creating it by passing the objects as
 a parameter.
 
-    rt := rtreego.NewTree(2, 25, 50, objects...)
+    rt := rtreego.NewTree(25, 50, objects...)
 
 Any type that implements the `Spatial` interface can be stored in the tree:
 
     type Spatial interface {
       Bounds() *Rect
+      GetTypeOf() reflect.Type
+      GetNameOf() string
     }
 
 `Rect`s are data structures for representing spatial objects, while `Point`s
@@ -60,13 +58,15 @@ of `float64`s:
 
     p1 := rtreego.Point{0.4, 0.5}
     p2 := rtreego.Point{6.2, -3.4}
+or
+    p3 := rtreego.NewPoint(3, 6)
 
-To create a `Rect`, specify a location and the lengths of the sides:
+To create a `Rect`, specify left bootom point, and right top point, give it a name:
 
-    r1, _ := rtreego.NewRect(p1, []float64{1, 2})
-    r2, _ := rtreego.NewRect(p2, []float64{1.7, 2.7})
+    r1, _ := rtreego.NewRectFromPoints(p1, rtreego.Point{1, 2}, "rectangle 1")
+    r2, _ := rtreego.NewRectFromPoints(p2, p1, "rect2")
 
-To demonstrate, let's create and store some test data. Now you can create line, rectangle, or point. You can create your own by implementing the `Spatial` interface, as shown below.
+To demonstrate creating your own shape, let's create and store some test data. You can create every type you want, but it should be possible to create a Minimal Bounding Rectangle(MBR) around it. 
 
     type Thing struct {
       where *Rect
@@ -95,7 +95,8 @@ We can insert and delete objects from the tree in any order.
     rt.Delete(thing2)
     // do some stuff...
     rt.Insert(anotherThing)
-<b>Everything below is implemented by original lib, and it needs to be tested</b>
+    
+<b>Everything below is implemented by original lib, and it needs to be tested</b><br>
 Note that ```Delete``` function does the equality comparison by comparing the
 memory addresses of the objects. If you do not have a pointer to the original
 object anymore, you can define a custom comparator.
