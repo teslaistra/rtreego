@@ -826,3 +826,8 @@ func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, ne
 	}
 	return nearest, dists, abort
 }
+
+func (tree *Rtree) NinRadius() []Spatial {
+	//TODO N в радиусе
+	return []Spatial{}
+}
