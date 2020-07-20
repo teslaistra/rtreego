@@ -26,7 +26,7 @@ func (t *Point) GetNameOf() string {
 
 //Returns string representation of rectangle left and right points
 func (p *Point) String() string {
-	return fmt.Sprintf("%.2f", p)
+	return fmt.Sprintf("%.6f", p)
 }
 
 //constructor

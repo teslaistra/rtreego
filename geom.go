@@ -19,6 +19,11 @@ type DimError struct {
 	Actual   int
 }
 
+type SearchObject struct {
+	Object   Spatial
+	Distance float64
+}
+
 func (err DimError) Error() string {
 	return "rtreego: dimension mismatch"
 }
@@ -255,4 +260,27 @@ func Max(x, y float64) float64 {
 		return y
 	}
 	return x
+}
+
+func radiansToDegrees(radians float64) float64 {
+	degrees := radians * (180 / math.Pi)
+	return degrees
+}
+
+func DistancePointToLine(point Point, r Rect) float64 {
+	//A is p of rect, and B is q of rect.
+	//C is a point
+
+	//line
+	ll1 := s2.LatLngFromDegrees(r.p[0], r.p[1])
+	ll2 := s2.LatLngFromDegrees(r.q[0], r.q[1])
+	pointA := s2.PointFromLatLng(ll1)
+	pointB := s2.PointFromLatLng(ll2)
+
+	ll3 := s2.LatLngFromDegrees(point[0], point[1])
+	pointC := s2.PointFromLatLng(ll3)
+
+	EarthRadius := 6370986.884258304
+	dist := s2.DistanceFromSegment(pointC, pointA, pointB).Radians() * EarthRadius
+	return dist
 }
