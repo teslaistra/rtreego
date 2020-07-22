@@ -262,11 +262,7 @@ func Max(x, y float64) float64 {
 	return x
 }
 
-func radiansToDegrees(radians float64) float64 {
-	degrees := radians * (180 / math.Pi)
-	return degrees
-}
-
+//returns shortest distance from point to line using S2
 func DistancePointToLine(point Point, r Rect) float64 {
 	//A is p of rect, and B is q of rect.
 	//C is a point
@@ -283,4 +279,60 @@ func DistancePointToLine(point Point, r Rect) float64 {
 	EarthRadius := 6370986.884258304
 	dist := s2.DistanceFromSegment(pointC, pointA, pointB).Radians() * EarthRadius
 	return dist
+}
+
+//returns shortest distance between Rectangle and line
+func DistanceRectToLine(rect Rect, line Line) float64 {
+
+	var distances []float64
+
+	distances = append(distances, DistancePointToLine(rect.q, *line.Bounds()))
+	distances = append(distances, DistancePointToLine(rect.p, *line.Bounds()))
+	rectangle_point2 := Point{rect.p[0], rect.q[1]}
+	rectangle_point4 := Point{rect.q[0], rect.p[1]}
+	distances = append(distances, DistancePointToLine(rectangle_point2, *line.Bounds()))
+	distances = append(distances, DistancePointToLine(rectangle_point4, *line.Bounds()))
+
+	side, _ := NewLine(rect.p, rectangle_point2, "")
+	side1 := *side.Bounds()
+	side, _ = NewLine(rect.p, rectangle_point4, "")
+	side2 := *side.Bounds()
+	side, _ = NewLine(rect.q, rectangle_point2, "")
+	side3 := *side.Bounds()
+	side, _ = NewLine(rect.q, rectangle_point4, "")
+	side4 := *side.Bounds()
+
+	distances = append(distances, DistancePointToLine(line.start, side1))
+	distances = append(distances, DistancePointToLine(line.start, side2))
+	distances = append(distances, DistancePointToLine(line.start, side3))
+	distances = append(distances, DistancePointToLine(line.start, side4))
+
+	distances = append(distances, DistancePointToLine(line.finish, side1))
+	distances = append(distances, DistancePointToLine(line.finish, side2))
+	distances = append(distances, DistancePointToLine(line.finish, side3))
+	distances = append(distances, DistancePointToLine(line.finish, side4))
+
+	min := distances[0]
+	for _, v := range distances {
+		if v < min {
+			min = v
+		}
+	}
+	return min
+}
+
+//returns shortest distance between two lines
+func DistanceLineToLine(from Line, to Line) float64 {
+	var distances []float64
+
+	distances = append(distances, DistancePointToLine(from.start, *to.Bounds()))
+	distances = append(distances, DistancePointToLine(from.finish, *to.Bounds()))
+
+	min := distances[0]
+	for _, v := range distances {
+		if v < min {
+			min = v
+		}
+	}
+	return min
 }

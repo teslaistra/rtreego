@@ -829,6 +829,7 @@ func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, ne
 	return nearest, dists, abort
 }
 
+//Returns array of N nearest neighbours at Point in radius R
 func (tree *Rtree) NnInRadiusPoint(nn int64, radius float64, point Point) []Spatial {
 	//here we are getting bound box of our radius-search
 	rect := S2RectFromPoint(radius, point)
@@ -839,7 +840,6 @@ func (tree *Rtree) NnInRadiusPoint(nn int64, radius float64, point Point) []Spat
 	boundRect, _ := NewRectFromPoints(left_point, right_point, "bound")
 
 	InBox := tree.SearchIntersect(boundRect) //getting results of search
-	toDeleteIndex := make([]int64, 0)        //here we will save index of elements out of circle of search
 
 	var SearchResult []SearchObject //Here we will store valid objects(distance to them < given radius)
 
@@ -847,21 +847,15 @@ func (tree *Rtree) NnInRadiusPoint(nn int64, radius float64, point Point) []Spat
 		switch InBox[i].(type) {
 		case *Rect:
 			distance := math.Sqrt(point.MinDist(InBox[i].Bounds()))
-			if distance == 0 || distance > radius {
-				toDeleteIndex = append(toDeleteIndex, int64(i))
-			} else {
+			if distance != 0 && distance < radius {
 				SearchResult = append(SearchResult, SearchObject{InBox[i], distance})
 			}
 			fmt.Println("Расстояние ", distance)
-
 			break
 		case *Point:
 			fmt.Println("Нашел точку")
 			distance := math.Sqrt(point.MinDist(InBox[i].Bounds()))
-			if distance == 0 || distance > radius {
-				fmt.Println("в список")
-				toDeleteIndex = append(toDeleteIndex, int64(i))
-			} else {
+			if distance != 0 && distance < radius {
 				SearchResult = append(SearchResult, SearchObject{InBox[i], distance})
 			}
 			fmt.Println("Расстояние ", distance)
@@ -869,14 +863,10 @@ func (tree *Rtree) NnInRadiusPoint(nn int64, radius float64, point Point) []Spat
 		case *Line:
 			fmt.Println("Нашел линию")
 			distance := DistancePointToLine(point, *InBox[i].Bounds())
-			if distance == 0 || distance > radius {
-				fmt.Println("в список")
-				toDeleteIndex = append(toDeleteIndex, int64(i))
-			} else {
+			if distance != 0 && distance < radius {
 				SearchResult = append(SearchResult, SearchObject{InBox[i], distance})
 			}
 			fmt.Println("Расстояние ", distance)
-
 			break
 		default:
 			fmt.Println("нашлось что то другое")
@@ -894,9 +884,6 @@ func (tree *Rtree) NnInRadiusPoint(nn int64, radius float64, point Point) []Spat
 	}
 	return SpatialResult
 }
-func RemoveIndex(s []Spatial, index int) []Spatial {
-	return append(s[:index], s[index+1:]...)
-}
 
 //returns S2 rectangle, which is a MBR of
 func S2RectFromPoint(radius float64, point Point) s2.Rect {
@@ -909,28 +896,77 @@ func S2RectFromPoint(radius float64, point Point) s2.Rect {
 	return rect
 }
 
+//Returns array of N nearest neighbours around Line in radius R
 func (tree *Rtree) NnInRadiusLine(nn int64, radius float64, line Line) []Spatial {
+	//making bounding S2-rectangle for ends of line.
 	left_rect := S2RectFromPoint(radius, line.start)
 	right_rect := S2RectFromPoint(radius, line.finish)
-	fmt.Println(left_rect.Lng.Lo)
 
+	//making S2 rectangle, which will include both rectangles
 	left1 := Point{(s1.Angle(left_rect.Lat.Lo) * s1.Radian).Degrees(), (s1.Angle(left_rect.Lng.Lo) * s1.Radian).Degrees()}
 	left2 := Point{(s1.Angle(left_rect.Lat.Hi) * s1.Radian).Degrees(), (s1.Angle(left_rect.Lng.Hi) * s1.Radian).Degrees()}
 	right1 := Point{(s1.Angle(right_rect.Lat.Hi) * s1.Radian).Degrees(), (s1.Angle(right_rect.Lng.Hi) * s1.Radian).Degrees()}
-	right2 := Point{(s1.Angle(right_rect.Lat.Hi) * s1.Radian).Degrees(), (s1.Angle(right_rect.Lng.Hi) * s1.Radian).Degrees()}
-	fmt.Println(s2.LatLngFromDegrees(left1[0], left1[1]))
+	right2 := Point{(s1.Angle(right_rect.Lat.Lo) * s1.Radian).Degrees(), (s1.Angle(right_rect.Lng.Lo) * s1.Radian).Degrees()}
 	rectangle := s2.RectFromLatLng(s2.LatLngFromDegrees(left1[0], left1[1]))
-	rectangle.AddPoint(s2.LatLngFromDegrees(left2[0], left2[1]))
-	rectangle.AddPoint(s2.LatLngFromDegrees(right1[0], right1[1]))
-	rectangle.AddPoint(s2.LatLngFromDegrees(right2[0], right2[1]))
+	rectangle = rectangle.AddPoint(s2.LatLngFromDegrees(left2[0], left2[1]))
+	rectangle = rectangle.AddPoint(s2.LatLngFromDegrees(right1[0], right1[1]))
+	rectangle = rectangle.AddPoint(s2.LatLngFromDegrees(right2[0], right2[1]))
 
 	//repacking from s2-rectangle to rtree-rectangle
-	left_point := Point{(s1.Angle(rectangle.Lat.Lo) * s1.Radian).Degrees(), (s1.Angle(rectangle.Lng.Lo) * s1.Radian).Degrees()}
-	right_point := Point{(s1.Angle(rectangle.Lat.Hi) * s1.Radian).Degrees(), (s1.Angle(rectangle.Lng.Hi) * s1.Radian).Degrees()}
-	boundRect, _ := NewRectFromPoints(left_point, right_point, "bound")
+	pointLeft := Point{(s1.Angle(rectangle.Lat.Lo) * s1.Radian).Degrees(), (s1.Angle(rectangle.Lng.Lo) * s1.Radian).Degrees()}
+	pointRight := Point{(s1.Angle(rectangle.Lat.Hi) * s1.Radian).Degrees(), (s1.Angle(rectangle.Lng.Hi) * s1.Radian).Degrees()}
+	boundRect, _ := NewRectFromPoints(pointLeft, pointRight, "bound")
 
 	InBox := tree.SearchIntersect(boundRect) //getting results of search
-	fmt.Println(InBox)
-	return []Spatial{}
+	var SearchResult []SearchObject          //Here we will store valid objects(distance to them < given radius)
+
+	for i := range InBox {
+		switch InBox[i].(type) {
+		case *Rect:
+			fmt.Println("Нашел прямоугольник")
+			distance := DistanceRectToLine(*InBox[i].Bounds(), line)
+			if distance != 0 && distance < radius {
+				SearchResult = append(SearchResult, SearchObject{InBox[i], distance})
+			}
+			fmt.Println("Расстояние ", distance)
+			break
+		case *Line:
+			fmt.Println("Нашел линию")
+			foundedLine, _ := NewLine(InBox[i].Bounds().p, InBox[i].Bounds().q, "")
+			distance := DistanceLineToLine(*foundedLine, line)
+			if distance != 0 && distance < radius {
+				SearchResult = append(SearchResult, SearchObject{InBox[i], distance})
+			}
+			fmt.Println("Расстояние ", distance)
+			break
+		case *Point:
+			fmt.Println("Нашел точку")
+			rect, _ := NewRectFromPoints(line.start, line.finish, "")
+			pp := InBox[i].Bounds().q
+			distance := DistancePointToLine(pp, *rect)
+			if distance != 0 && distance < radius {
+				SearchResult = append(SearchResult, SearchObject{InBox[i], distance})
+			}
+			fmt.Println("Расстояние ", distance)
+		default:
+			fmt.Println("Found something else...calculating distance to MBR")
+			distance := DistanceRectToLine(*InBox[i].Bounds(), line)
+			if distance != 0 && distance < radius {
+				SearchResult = append(SearchResult, SearchObject{InBox[i], distance})
+			}
+			fmt.Println("Расстояние ", distance)
+		}
+	}
+	sort.SliceStable(SearchResult, func(i, j int) bool {
+		return SearchResult[i].Distance < SearchResult[j].Distance
+	})
+	var SpatialResult []Spatial
+	for i := range SearchResult {
+		if int64(i) < nn {
+			SpatialResult = append(SpatialResult, SearchResult[i].Object)
+		}
+	}
+
+	return SpatialResult
 
 }
