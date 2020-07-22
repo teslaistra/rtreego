@@ -95,8 +95,9 @@ We can insert and delete objects from the tree in any order.
     rt.Delete(thing2)
     // do some stuff...
     rt.Insert(anotherThing)
-    
-<b>Everything below is implemented by original lib, and it needs to be tested</b><br>
+
+<b>Comparator functionality is implemented by original lib, and it needs to be tested</b><br>
+
 Note that ```Delete``` function does the equality comparison by comparing the
 memory addresses of the objects. If you do not have a pointer to the original
 object anymore, you can define a custom comparator.
@@ -122,7 +123,7 @@ corrupt the tree.
 
 ### Queries
 
-Bounding-box and k-nearest-neighbors queries are supported.
+Bounding-box and k-nearest-neighbors near point, k-nearest-neighbors in radius near line and point queries are supported.
 
 Bounding-box queries require a search `*Rect`. It returns all objects that
 touch the search rectangle.
@@ -133,6 +134,7 @@ touch the search rectangle.
     results := rt.SearchIntersect(bb)
 
 ### Filters
+<b>Filter functionality is implemented by original lib, and it needs to be tested</b><br>
 
 You can filter out values during searches by implementing Filter functions.
 
