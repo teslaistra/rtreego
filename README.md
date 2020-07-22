@@ -132,6 +132,27 @@ touch the search rectangle.
 
     // Get a slice of the objects in rt that intersect bb:
     results := rt.SearchIntersect(bb)
+    
+Nearest-neighbor queries find the objects in a tree closest to a specified
+query point.
+
+    q := rtreego.Point{6.5, -2.47}
+    k := 5
+
+    // Get a slice of the k objects in rt closest to q:
+    results = rt.NearestNeighbors(k, q)
+Or you can find N objects in radius near line or point. Example for line:
+
+    
+        arbat, _ := rtreego.NewLine(rtreego.Point{55.752575, 37.575047}, rtreego.Point{55.752624, 37.582622}, "arbat")
+	p1 := rtreego.NewPoint(55.752612, 37.581785)
+	p2 := rtreego.NewPoint(55.752575, 37.580905)
+	out := rtreego.NewPoint(55.753665, 37.580948)
+
+	rt.Insert(p1)
+	rt.Insert(p2)
+	rt.Insert(out)
+	result := rt.NnInRadiusLine(100, 120, *arbat)
 
 ### Filters
 <b>Filter functionality is implemented by original lib, and it needs to be tested</b><br>
@@ -146,14 +167,6 @@ backwards compatibility.
     // maximum of three results will be returned
     tree.SearchIntersect(bb, LimitFilter(3))
 
-Nearest-neighbor queries find the objects in a tree closest to a specified
-query point.
-
-    q := rtreego.Point{6.5, -2.47}
-    k := 5
-
-    // Get a slice of the k objects in rt closest to q:
-    results = rt.NearestNeighbors(k, q)
 
 ### More information
 
