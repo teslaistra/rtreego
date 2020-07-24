@@ -12,6 +12,7 @@ import (
 	"math"
 	"reflect"
 	"sort"
+	"time"
 )
 
 // Comparator compares two spatials and returns whether they are equal.
@@ -838,8 +839,13 @@ func (tree *Rtree) NnInRadiusPoint(nn int64, radius float64, point Point) []Spat
 	left_point := Point{(s1.Angle(rect.Lat.Lo) * s1.Radian).Degrees(), (s1.Angle(rect.Lng.Lo) * s1.Radian).Degrees()}
 	right_point := Point{(s1.Angle(rect.Lat.Hi) * s1.Radian).Degrees(), (s1.Angle(rect.Lng.Hi) * s1.Radian).Degrees()}
 	boundRect, _ := NewRectFromPoints(left_point, right_point, "bound")
+	start := time.Now()
 
 	InBox := tree.SearchIntersect(boundRect) //getting results of search
+	elapsed := time.Since(start)
+
+	fmt.Println("Intersecting took", elapsed)
+	start = time.Now()
 
 	var SearchResult []SearchObject //Here we will store valid objects(distance to them < given radius)
 
@@ -850,38 +856,51 @@ func (tree *Rtree) NnInRadiusPoint(nn int64, radius float64, point Point) []Spat
 			if distance != 0 && distance < radius {
 				SearchResult = append(SearchResult, SearchObject{InBox[i], distance})
 			}
-			fmt.Println("Расстояние ", distance)
+			//fmt.Println("Расстояние ", distance)
 			break
 		case *Point:
-			fmt.Println("Нашел точку")
+			//fmt.Println("Нашел точку")
 			distance := math.Sqrt(point.MinDist(InBox[i].Bounds()))
 			if distance != 0 && distance < radius {
 				SearchResult = append(SearchResult, SearchObject{InBox[i], distance})
 			}
-			fmt.Println("Расстояние ", distance)
+			//fmt.Println("Расстояние ", distance)
 			break
 		case *Line:
-			fmt.Println("Нашел линию")
-			distance := DistancePointToLine(point, *InBox[i].Bounds())
-			if distance != 0 && distance < radius {
-				SearchResult = append(SearchResult, SearchObject{InBox[i], distance})
+			//fmt.Println("Нашел линию")
+			distance := float32(DistancePointToLine(point, *InBox[i].Bounds()))
+			if distance != 0 && distance < float32(radius) {
+				SearchResult = append(SearchResult, SearchObject{InBox[i], float64(distance)})
 			}
-			fmt.Println("Расстояние ", distance)
+			//fmt.Println("Расстояние ", distance)
 			break
 		default:
 			fmt.Println("нашлось что то другое")
 		}
 	}
+	elapsed = time.Since(start)
+	fmt.Println("Switch took", elapsed)
+	start = time.Now()
 
 	sort.SliceStable(SearchResult, func(i, j int) bool {
 		return SearchResult[i].Distance < SearchResult[j].Distance
 	})
+	elapsed = time.Since(start)
+	start = time.Now()
+
+	fmt.Println("Sorting took", elapsed)
 	var SpatialResult []Spatial
 	for i := range SearchResult {
 		if int64(i) < nn {
 			SpatialResult = append(SpatialResult, SearchResult[i].Object)
+		} else {
+			elapsed = time.Since(start)
+			fmt.Println("Cleaning took", elapsed)
+			return SpatialResult
 		}
+
 	}
+
 	return SpatialResult
 }
 
@@ -923,38 +942,38 @@ func (tree *Rtree) NnInRadiusLine(nn int64, radius float64, line Line) []Spatial
 	for i := range InBox {
 		switch InBox[i].(type) {
 		case *Rect:
-			fmt.Println("Нашел прямоугольник")
+			//fmt.Println("Нашел прямоугольник")
 			distance := DistanceRectToLine(*InBox[i].Bounds(), line)
 			if distance != 0 && distance < radius {
 				SearchResult = append(SearchResult, SearchObject{InBox[i], distance})
 			}
-			fmt.Println("Расстояние ", distance)
+			//fmt.Println("Расстояние ", distance)
 			break
 		case *Line:
-			fmt.Println("Нашел линию")
+			//fmt.Println("Нашел линию")
 			foundedLine, _ := NewLine(InBox[i].Bounds().p, InBox[i].Bounds().q, "")
 			distance := DistanceLineToLine(*foundedLine, line)
 			if distance != 0 && distance < radius {
 				SearchResult = append(SearchResult, SearchObject{InBox[i], distance})
 			}
-			fmt.Println("Расстояние ", distance)
+			//fmt.Println("Расстояние ", distance)
 			break
 		case *Point:
-			fmt.Println("Нашел точку")
+			//fmt.Println("Нашел точку")
 			rect, _ := NewRectFromPoints(line.start, line.finish, "")
 			pp := InBox[i].Bounds().q
 			distance := DistancePointToLine(pp, *rect)
 			if distance != 0 && distance < radius {
 				SearchResult = append(SearchResult, SearchObject{InBox[i], distance})
 			}
-			fmt.Println("Расстояние ", distance)
+			//fmt.Println("Расстояние ", distance)
 		default:
-			fmt.Println("Found something else...calculating distance to MBR")
+			//fmt.Println("Found something else...calculating distance to MBR")
 			distance := DistanceRectToLine(*InBox[i].Bounds(), line)
 			if distance != 0 && distance < radius {
 				SearchResult = append(SearchResult, SearchObject{InBox[i], distance})
 			}
-			fmt.Println("Расстояние ", distance)
+			//fmt.Println("Расстояние ", distance)
 		}
 	}
 	sort.SliceStable(SearchResult, func(i, j int) bool {
