@@ -95,8 +95,9 @@ We can insert and delete objects from the tree in any order.
     rt.Delete(thing2)
     // do some stuff...
     rt.Insert(anotherThing)
-    
-<b>Everything below is implemented by original lib, and it needs to be tested</b><br>
+
+<b>Comparator functionality is implemented by original lib, and it needs to be tested</b><br>
+
 Note that ```Delete``` function does the equality comparison by comparing the
 memory addresses of the objects. If you do not have a pointer to the original
 object anymore, you can define a custom comparator.
@@ -122,7 +123,7 @@ corrupt the tree.
 
 ### Queries
 
-Bounding-box and k-nearest-neighbors queries are supported.
+Bounding-box and k-nearest-neighbors near point, k-nearest-neighbors in radius(meters) near line and point queries are supported.
 
 Bounding-box queries require a search `*Rect`. It returns all objects that
 touch the search rectangle.
@@ -131,8 +132,32 @@ touch the search rectangle.
 
     // Get a slice of the objects in rt that intersect bb:
     results := rt.SearchIntersect(bb)
+    
+Nearest-neighbor queries find the objects in a tree closest to a specified
+query point.
+
+    q := rtreego.Point{6.5, -2.47}
+    k := 5
+
+    // Get a slice of the k objects in rt closest to q:
+    results = rt.NearestNeighbors(k, q)
+Or you can find N objects in radius near line or point. Example for line:
+
+    
+    arbat, _ := rtreego.NewLine(rtreego.Point{55.752575, 37.575047}, rtreego.Point{55.752624, 37.582622}, "arbat")
+	p1 := rtreego.NewPoint(55.752612, 37.581785)
+	p2 := rtreego.NewPoint(55.752575, 37.580905)
+	out := rtreego.NewPoint(55.753665, 37.580948)
+
+	rt.Insert(p1)
+	rt.Insert(p2)
+	rt.Insert(out)
+	k := 10
+	radius := 120
+	result := rt.NnInRadiusLine(k, radius, *arbat)
 
 ### Filters
+<b>Filter functionality is implemented by original lib, and it needs to be tested</b><br>
 
 You can filter out values during searches by implementing Filter functions.
 
@@ -144,18 +169,10 @@ backwards compatibility.
     // maximum of three results will be returned
     tree.SearchIntersect(bb, LimitFilter(3))
 
-Nearest-neighbor queries find the objects in a tree closest to a specified
-query point.
-
-    q := rtreego.Point{6.5, -2.47}
-    k := 5
-
-    // Get a slice of the k objects in rt closest to q:
-    results = rt.NearestNeighbors(k, q)
 
 ### More information
 
-See [GoDoc](http://godoc.org/github.com/dhconnelly/rtreego) for full API
+See [GoDoc](http://godoc.org/github.com/dhconnelly/rtreego) for full original lib API
 documentation.
 
 References
