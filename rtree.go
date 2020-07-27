@@ -882,38 +882,38 @@ func (tree *Rtree) NnInRadiusPoint(nn int64, radius float64, point Point) []Spat
 	fmt.Println("Switch took", elapsed)
 
 	start = time.Now()
-	/*
-		sort.SliceStable(SearchResult, func(i, j int) bool {
-			return SearchResult[i].Distance < SearchResult[j].Distance
-		})
-		//elapsed = time.Since(start)
 
-		//fmt.Println("Sorting took", elapsed)
-		//start = time.Now()
+	sort.SliceStable(SearchResult, func(i, j int) bool {
+		return SearchResult[i].Distance < SearchResult[j].Distance
+	})
+	//elapsed = time.Since(start)
 
-		var SpatialResult []Spatial
+	//fmt.Println("Sorting took", elapsed)
+	//start = time.Now()
 
-		for i := range SearchResult {
-			if int64(i) < nn {
-				SpatialResult = append(SpatialResult, SearchResult[i].Object)
-			} else {
-				elapsed = time.Since(start)
-				fmt.Println("Returning N took", elapsed)
-				return SpatialResult
-			}
+	var SpatialResult []Spatial
+
+	for i := range SearchResult {
+		if int64(i) < nn {
+			SpatialResult = append(SpatialResult, SearchResult[i].Object)
+		} else {
+			elapsed = time.Since(start)
+			fmt.Println("Returning N took", elapsed)
+			return SpatialResult
 		}
-
-		return SpatialResult
-	*/
-
-	start = time.Now()
-
-	SpatialResult := GetNSmallest(SearchResult, nn)
-	fmt.Println("Getting N largest took", time.Since(start))
-	start = time.Now()
+	}
 
 	return SpatialResult
 
+	/*
+		start = time.Now()
+
+		SpatialResult := GetNSmallest(SearchResult, nn)
+		fmt.Println("Getting N largest took", time.Since(start))
+		start = time.Now()
+
+		return SpatialResult
+	*/
 }
 
 //returns S2 rectangle, which is a MBR of

@@ -60,6 +60,14 @@ func main() {
 
 	rt := rtreego.NewTree(10, 20)
 
+	p1 := rtreego.NewPoint(55.752612, 37.581785)
+	p2 := rtreego.NewPoint(55.752575, 37.580905)
+
+	rt.Insert(p1)
+	rt.Insert(p2)
+
+	fmt.Println(rt.NnInRadiusPoint(1, 2000, *rtreego.NewPoint(55.752588, 37.578526)))
+
 }
 
 func randFloat(min, max float64) float64 {
