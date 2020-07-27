@@ -29,11 +29,10 @@ func test1(rt rtreego.Rtree) {
 	fmt.Println(rt.NnInRadiusLine(100, 120, *arbat))
 
 }
+func stress(rt rtreego.Rtree) {
 
-func main() {
-	rt := rtreego.NewTree(10, 20)
-	num := 10000000
-	fmt.Println("0Вставляю", num, "точек")
+	num := 10000
+	fmt.Println("Загружаю", num, "точек")
 	start := time.Now()
 
 	for i := 0; i < num; i++ {
@@ -55,6 +54,12 @@ func main() {
 		fmt.Println("Searchig in radius", i, "took", elapsed)
 
 	}
+}
+
+func main() {
+
+	rt := rtreego.NewTree(10, 20)
+
 }
 
 func randFloat(min, max float64) float64 {
