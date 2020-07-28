@@ -831,8 +831,11 @@ func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, ne
 }
 
 //Returns array of N nearest neighbours at Point in radius R
-func (tree *Rtree) NnInRadiusPoint(nn int64, radius float64, point Point) []Spatial {
+//If filed method == "sort" will use not efficient way to find N-nearest(default Golang sort).
+//If field method == anything else, it will be using QuickSelect algorithm
+func (tree *Rtree) NnInRadiusPoint(nn int64, radius float64, point Point, method string) []Spatial {
 	//here we are getting bound box of our radius-search
+
 	rect := S2RectFromPoint(radius, point)
 
 	//repacking from s2-rectangle to rtree-rectangle
@@ -878,42 +881,38 @@ func (tree *Rtree) NnInRadiusPoint(nn int64, radius float64, point Point) []Spat
 			fmt.Println("нашлось что то другое")
 		}
 	}
-	elapsed = time.Since(start)
-	fmt.Println("Switch took", elapsed)
+	fmt.Println("Switch took", time.Since(start))
 
 	start = time.Now()
+	if method == "sort" {
+		sort.SliceStable(SearchResult, func(i, j int) bool {
+			return SearchResult[i].Distance < SearchResult[j].Distance
+		})
 
-	sort.SliceStable(SearchResult, func(i, j int) bool {
-		return SearchResult[i].Distance < SearchResult[j].Distance
-	})
-	//elapsed = time.Since(start)
-
-	//fmt.Println("Sorting took", elapsed)
-	//start = time.Now()
-
-	var SpatialResult []Spatial
-
-	for i := range SearchResult {
-		if int64(i) < nn {
-			SpatialResult = append(SpatialResult, SearchResult[i].Object)
-		} else {
-			elapsed = time.Since(start)
-			fmt.Println("Returning N took", elapsed)
-			return SpatialResult
-		}
-	}
-
-	return SpatialResult
-
-	/*
+		fmt.Println("Sorting took", time.Since(start))
 		start = time.Now()
 
+		var SpatialResult []Spatial
+
+		for i := range SearchResult {
+			if int64(i) < nn {
+				SpatialResult = append(SpatialResult, SearchResult[i].Object)
+			} else {
+				elapsed = time.Since(start)
+				fmt.Println("Cleaning N took", elapsed)
+				return SpatialResult
+			}
+		}
+
+		return SpatialResult
+	} else {
+
 		SpatialResult := GetNSmallest(SearchResult, nn)
-		fmt.Println("Getting N largest took", time.Since(start))
+		fmt.Println("Getting N largest via Quickselect took", time.Since(start))
 		start = time.Now()
 
 		return SpatialResult
-	*/
+	}
 }
 
 //returns S2 rectangle, which is a MBR of

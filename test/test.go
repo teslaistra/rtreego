@@ -31,14 +31,13 @@ func test1(rt rtreego.Rtree) {
 }
 func stress(rt rtreego.Rtree) {
 
-	num := 10000
+	num := 1000000
 	fmt.Println("Загружаю", num, "точек")
 	start := time.Now()
 
 	for i := 0; i < num; i++ {
 		lat := randFloat(55.765654, 55.755966)
 		lon := randFloat(37.643501, 37.583127)
-		//fmt.Println(lat, lon)
 		rt.Insert(rtreego.NewPoint(lat, lon))
 	}
 	elapsed := time.Since(start)
@@ -49,9 +48,15 @@ func stress(rt rtreego.Rtree) {
 		start := time.Now()
 		lat := randFloat(55.765654, 55.755966)
 		lon := randFloat(37.643501, 37.583127)
-		rt.NnInRadiusPoint(10, float64(i), *rtreego.NewPoint(lat, lon))
+		fmt.Println(rt.NnInRadiusPoint(10, float64(i), *rtreego.NewPoint(lat, lon), "sort"))
 		elapsed := time.Since(start)
-		fmt.Println("Searchig in radius", i, "took", elapsed)
+		fmt.Println("Searching in radius", i, "took via Sort", elapsed)
+
+		start = time.Now()
+		fmt.Println(rt.NnInRadiusPoint(10, float64(i), *rtreego.NewPoint(lat, lon), ""))
+		fmt.Println("Searching in radius", i, "took via Quicksort", time.Since(start))
+		fmt.Println("At point", lat, lon)
+		fmt.Println("_________________________________________________________")
 
 	}
 }
@@ -66,12 +71,12 @@ func main() {
 	rt.Insert(p1)
 	rt.Insert(p2)
 
-	fmt.Println(rt.NnInRadiusPoint(1, 2000, *rtreego.NewPoint(55.752588, 37.578526)))
-
+	fmt.Println(rt.NnInRadiusPoint(1, 2000, *rtreego.NewPoint(55.752588, 37.578526), "sort"))
+	stress(*rt)
 }
 
 func randFloat(min, max float64) float64 {
-	rand.Seed(time.Now().UnixNano())
+	rand.Seed(time.Now().UnixNano() * rand.Int63())
 
 	res := min + rand.Float64()*(max-min)
 	return res
