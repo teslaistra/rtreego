@@ -927,7 +927,7 @@ func S2RectFromPoint(radius float64, point Point) s2.Rect {
 }
 
 //Returns array of N nearest neighbours around Line in radius R
-func (tree *Rtree) NnInRadiusLine(nn int64, radius float64, line Line) []Spatial {
+func (tree *Rtree) NnInRadiusLine(nn int64, radius float64, line Line, method string) []Spatial {
 	//making bounding S2-rectangle for ends of line.
 	left_rect := S2RectFromPoint(radius, line.start)
 	right_rect := S2RectFromPoint(radius, line.finish)
@@ -950,6 +950,9 @@ func (tree *Rtree) NnInRadiusLine(nn int64, radius float64, line Line) []Spatial
 	InBox := tree.SearchIntersect(boundRect) //getting results of search
 	var SearchResult []SearchObject          //Here we will store valid objects(distance to them < given radius)
 
+	if len(InBox) < int(nn) {
+		return InBox
+	}
 	for i := range InBox {
 		switch InBox[i].(type) {
 		case *Rect:
@@ -961,6 +964,8 @@ func (tree *Rtree) NnInRadiusLine(nn int64, radius float64, line Line) []Spatial
 			//fmt.Println("Расстояние ", distance)
 			break
 		case *Line:
+			//TODO переделать подсчет дистанции до линии, добавив случай пересечения
+			// https://godoc.org/github.com/golang/geo/s2#EdgeOrVertexCrossing
 			//fmt.Println("Нашел линию")
 			foundedLine, _ := NewLine(InBox[i].Bounds().p, InBox[i].Bounds().q, "")
 			distance := DistanceLineToLine(*foundedLine, line)
@@ -987,16 +992,22 @@ func (tree *Rtree) NnInRadiusLine(nn int64, radius float64, line Line) []Spatial
 			//fmt.Println("Расстояние ", distance)
 		}
 	}
-	sort.SliceStable(SearchResult, func(i, j int) bool {
-		return SearchResult[i].Distance < SearchResult[j].Distance
-	})
-	var SpatialResult []Spatial
-	for i := range SearchResult {
-		if int64(i) < nn {
-			SpatialResult = append(SpatialResult, SearchResult[i].Object)
-		}
-	}
 
-	return SpatialResult
+	if method == "sort" {
+		sort.SliceStable(SearchResult, func(i, j int) bool {
+			return SearchResult[i].Distance < SearchResult[j].Distance
+		})
+		var SpatialResult []Spatial
+		for i := range SearchResult {
+			if int64(i) < nn {
+				SpatialResult = append(SpatialResult, SearchResult[i].Object)
+			}
+		}
+
+		return SpatialResult
+	} else {
+		SpatialResult := GetNSmallest(SearchResult, nn)
+		return SpatialResult
+	}
 
 }
