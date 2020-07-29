@@ -964,8 +964,6 @@ func (tree *Rtree) NnInRadiusLine(nn int64, radius float64, line Line, method st
 			//fmt.Println("Расстояние ", distance)
 			break
 		case *Line:
-			//TODO переделать подсчет дистанции до линии, добавив случай пересечения
-			// https://godoc.org/github.com/golang/geo/s2#EdgeOrVertexCrossing
 			//fmt.Println("Нашел линию")
 			foundedLine, _ := NewLine(InBox[i].Bounds().p, InBox[i].Bounds().q, "")
 			distance := DistanceLineToLine(*foundedLine, line)
