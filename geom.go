@@ -285,7 +285,7 @@ func DistancePointToLine(point Point, r Rect) float64 {
 func DistanceRectToLine(rect Rect, line Line) float64 {
 
 	var distances []float64
-
+	//TODO possible to be optimised with S2
 	distances = append(distances, DistancePointToLine(rect.q, *line.Bounds()))
 	distances = append(distances, DistancePointToLine(rect.p, *line.Bounds()))
 	rectangle_point2 := Point{rect.p[0], rect.q[1]}
@@ -334,5 +334,24 @@ func DistanceLineToLine(from Line, to Line) float64 {
 			min = v
 		}
 	}
+
+	//TODO check if lines are crossing. Current realisation won't consider are line crossing or no.
+	// In case of crossing it will return just a distance between one of points of line and point of crossing
+	// But it should be a zero distance in case of crossing
+
 	return min
+}
+
+func IsCrossing(one, two Line) bool {
+	//A := s2.PointFromLatLng(s2.LatLngFromDegrees(one.start[0], one.start[1]))
+	//B := s2.PointFromLatLng(s2.LatLngFromDegrees(one.finish[0], one.finish[1]))
+
+	//C := s2.PointFromLatLng(s2.LatLngFromDegrees(two.start[0], two.start[1]))
+	//D := s2.PointFromLatLng(s2.LatLngFromDegrees(two.finish[0], two.finish[1]))
+
+	//TODO Crossing geographical lines
+	// Possible way of realization:
+	// https://github.com/postgis/postgis/blob/90a15b199ff55e946281c7200e0930e28dfdd585/postgis/lwgeom_geos.c#L2281
+
+	return true
 }

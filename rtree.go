@@ -852,6 +852,8 @@ func (tree *Rtree) NnInRadiusPoint(nn int64, radius float64, point Point, method
 
 	var SearchResult []SearchObject //Here we will store valid objects(distance to them < given radius)
 
+	//Calculating distances to every found object,
+	//If distance is valid(smaller that given radius) we will store it in SearchResult array
 	for i := range InBox {
 		switch InBox[i].(type) {
 		case *Rect:
@@ -885,6 +887,9 @@ func (tree *Rtree) NnInRadiusPoint(nn int64, radius float64, point Point, method
 
 	start = time.Now()
 	if method == "sort" {
+
+		//This way of getting NN will use built-in sort of Golang, which will sort whole array.
+		//It works much more slower rather QuickSelect method, so it is just a way to verify Quickselect method if you need
 		sort.SliceStable(SearchResult, func(i, j int) bool {
 			return SearchResult[i].Distance < SearchResult[j].Distance
 		})
@@ -906,6 +911,7 @@ func (tree *Rtree) NnInRadiusPoint(nn int64, radius float64, point Point, method
 
 		return SpatialResult
 	} else {
+		//Using Quickselect algorithm to choose n-nearest from array(n-objects with smallest distance to them
 
 		SpatialResult := GetNSmallest(SearchResult, nn)
 		fmt.Println("Getting N largest via Quickselect took", time.Since(start))
@@ -927,6 +933,8 @@ func S2RectFromPoint(radius float64, point Point) s2.Rect {
 }
 
 //Returns array of N nearest neighbours around Line in radius R
+//If filed method == "sort" will use not efficient way to find N-nearest(default Golang sort).
+//If field method == anything else, it will be using QuickSelect algorithm
 func (tree *Rtree) NnInRadiusLine(nn int64, radius float64, line Line, method string) []Spatial {
 	//making bounding S2-rectangle for ends of line.
 	left_rect := S2RectFromPoint(radius, line.start)
@@ -950,9 +958,13 @@ func (tree *Rtree) NnInRadiusLine(nn int64, radius float64, line Line, method st
 	InBox := tree.SearchIntersect(boundRect) //getting results of search
 	var SearchResult []SearchObject          //Here we will store valid objects(distance to them < given radius)
 
+	//If we got number of results smaller that given NN, will return result of search without any calculations
 	if len(InBox) < int(nn) {
 		return InBox
 	}
+
+	//Calculating distances to every found object,
+	//If distance is valid(smaller that given radius) we will store it in SearchResult array
 	for i := range InBox {
 		switch InBox[i].(type) {
 		case *Rect:
@@ -992,6 +1004,8 @@ func (tree *Rtree) NnInRadiusLine(nn int64, radius float64, line Line, method st
 	}
 
 	if method == "sort" {
+		//This way of getting NN will use built-in sort of Golang, which will sort whole array.
+		//It works much more slower rather QuickSelect method, so it is just a way to verify Quickselect method
 		sort.SliceStable(SearchResult, func(i, j int) bool {
 			return SearchResult[i].Distance < SearchResult[j].Distance
 		})
@@ -1004,6 +1018,8 @@ func (tree *Rtree) NnInRadiusLine(nn int64, radius float64, line Line, method st
 
 		return SpatialResult
 	} else {
+
+		//Using Quickselect algorithm to choose n-nearest from array(n-objects with smallest distance to them
 		SpatialResult := GetNSmallest(SearchResult, nn)
 		return SpatialResult
 	}
